@@ -1,31 +1,40 @@
-FROM java:7
+FROM java:latest
+
+#ENV BUILD_PACKAGES=
+ENV DEBIAN_FRONTEND noninteractive
 
 # Setup teamcity-agent and his data dir
 RUN adduser --disabled-password --gecos "" teamcity-agent\
     && mkdir -p /data\
     && chown -R teamcity-agent:root /data
 
-# Prepare system for Node.js installation (https://github.com/nodesource/distributions)
-RUN curl -sL https://deb.nodesource.com/setup_4.x | bash -
+RUN curl -sSL https://get.docker.com/ | sh
 
 # Install build tools
 RUN apt-get update -qq\
-    &&  apt-get install -qqy\
+    &&  apt-get install -qqy $BUILD_PACKAGES \
+          python \
           build-essential\
-          nodejs\
           unzip\
           git\
+    && apt-get remove $BUILD_PACKAGES \
     && apt-get clean autoclean\
     && apt-get autoremove -y\
     && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-RUN npm install -g npm@3
+RUN service docker start \
+  && systemctl enable docker.service
+
+ENV CLOUDSDK_PYTHON_SITEPACKAGES 1
+RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip && unzip google-cloud-sdk.zip && rm google-cloud-sdk.zip && \
+    google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/home/teamcity-agent/.bashrc --additional-components app-engine-python app kubectl alpha beta && \
+    chmod -R +rx /google-cloud-sdk/bin
 
 # Install phantomjs
-ENV PHANTOMJS phantomjs-2.1.1-linux-x86_64
+#ENV PHANTOMJS phantomjs-2.1.1-linux-x86_64
 
-RUN curl -Ls https://bitbucket.org/ariya/phantomjs/downloads/${PHANTOMJS}.tar.bz2\
-    | tar --strip=2 -jx ${PHANTOMJS}/bin/phantomjs -C /usr/bin
+#RUN curl -Ls https://bitbucket.org/ariya/phantomjs/downloads/${PHANTOMJS}.tar.bz2\
+    #| tar --strip=2 -jx ${PHANTOMJS}/bin/phantomjs -C /usr/bin
 
 # prepare docker-in-docker (with some sane defaults here,
 # which should be overridden via `docker run -e ADDITIONAL_...`)

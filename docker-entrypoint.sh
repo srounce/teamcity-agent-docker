@@ -41,5 +41,7 @@ groups teamcity-agent | grep -q "$ADDITIONAL_GROUP" ||\
   (echo "adding teamcity-agent to $ADDITIONAL_GROUP group";\
    usermod -a -G $ADDITIONAL_GROUP teamcity-agent)
 
+gcloud auth activate-service-account --key-file /etc/secret/serviceaccount.json
+
 echo "Starting build-agent in $AGENT_DIR"
 exec su teamcity-agent -c "${AGENT_DIR}/bin/agent.sh run"
