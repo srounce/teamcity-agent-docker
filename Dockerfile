@@ -1,29 +1,25 @@
 FROM java:latest
 
-#ENV BUILD_PACKAGES=
+ENV CONTAINER_BUILD_DATE `date`
 ENV DEBIAN_FRONTEND noninteractive
 
 # Setup teamcity-agent and his data dir
 RUN adduser --disabled-password --gecos "" teamcity-agent\
     && mkdir -p /data\
-    && chown -R teamcity-agent:root /data
-
-RUN curl -sSL https://get.docker.com/ | sh
-
-# Install build tools
-RUN apt-get update -qq\
-    &&  apt-get install -qqy $BUILD_PACKAGES \
-          python \
-          build-essential\
-          unzip\
-          git\
-    && apt-get remove $BUILD_PACKAGES \
-    && apt-get clean autoclean\
-    && apt-get autoremove -y\
-    && rm -rf /var/lib/{apt,dpkg,cache,log}/
-
-RUN service docker start \
-  && systemctl enable docker.service
+    && chown -R teamcity-agent:root /data \
+		&& curl -sSL https://get.docker.com/ | sh \
+    && apt-get update -qq\
+			&& apt-get install -qqy \
+				$BUILD_PACKAGES \
+				python \
+				build-essential\
+				unzip\
+				git\
+			&& apt-get remove $BUILD_PACKAGES \
+			&& apt-get clean autoclean\
+			&& apt-get autoremove -y\
+			&& rm -rf /var/lib/{apt,dpkg,cache,log}/ \
+			&& service docker start && systemctl enable docker.service
 
 ENV CLOUDSDK_PYTHON_SITEPACKAGES 1
 RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip && unzip google-cloud-sdk.zip && rm google-cloud-sdk.zip && \
