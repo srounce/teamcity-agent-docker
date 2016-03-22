@@ -41,6 +41,14 @@ groups teamcity-agent | grep -q "$ADDITIONAL_GROUP" ||\
   (echo "adding teamcity-agent to $ADDITIONAL_GROUP group";\
    usermod -a -G $ADDITIONAL_GROUP teamcity-agent)
 
+if [ ! -d /google-cloud-sdk/bin ]; then
+	wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip && unzip google-cloud-sdk.zip && rm google-cloud-sdk.zip && \
+			google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/home/teamcity-agent/.bashrc --additional-components app-engine-python app kubectl alpha beta && \
+	chmod -R +rx /google-cloud-sdk/bin
+fi
+
+service docker start
+
 echo "export PATH=$PATH:/google-cloud-sdk/bin:/jre/bin" >> /home/teamcity-agent/.bashrc
 echo "source ~/.bashrc" > /home/teamcity-agent/.bash_profile
 echo "source ~/.bashrc" > /home/teamcity-agent/.profile
